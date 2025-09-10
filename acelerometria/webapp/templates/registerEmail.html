@@ -1,0 +1,21 @@
+{% extends "master.html" %}
+{% load static %}
+{% block title %}
+<title>Register Email</title>
+{%endblock%}
+
+{% block content %}
+<main class="mainRegister">
+    <div class="container">
+        <div class="form-box">
+            <h2>Welcome, Here you can create your new account!</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="email" name="email" required placeholder="example@email.com">
+                <br>
+                <button type="submit">Continue</button>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock %}

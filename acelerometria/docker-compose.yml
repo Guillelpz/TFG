@@ -1,0 +1,45 @@
+services:
+  web:
+    build: .
+    container_name: django_app
+
+    # Gunicorn en foreground, SIN --preload (mejor con rpy2)
+    command: >
+      gunicorn acelerometria.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      --threads 1
+      --timeout 500
+      --graceful-timeout 500
+
+    ports:
+      - "10048:8000"   # host:container
+
+    volumes:
+      - .:/app                           # Código del proyecto
+      - db_volume:/app/db               # SQLite DB
+      - static_volume:/app/staticfiles  # Staticfiles
+      - media_volume:/app/media         # Media
+
+    environment:
+      - DJANGO_SETTINGS_MODULE=acelerometria.settings
+
+    restart: unless-stopped
+    init: true
+
+    # Healthcheck robusto sin curl/wget
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - <<'PY'\nimport urllib.request,sys; status=urllib.request.urlopen('http://localhost:8000/', timeout=3).status; sys.exit(0 if status<500 else 1)\nPY"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  db_volume:
+  static_volume:
+  media_volume:

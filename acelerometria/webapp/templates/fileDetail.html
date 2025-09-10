@@ -1,0 +1,181 @@
+{% extends "master.html" %}
+{% load static %}
+
+{% block title %}
+<title>File Detail</title>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+  <div class="graph-box" style="background-color: #f9f9f9; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 1000px; margin: 0 auto;">
+    <div class="file-info" style="margin-bottom: 20px;">
+        <h1>📁 {{ filename }}</h1>
+        <p>
+        👤 Age: {{ file.age }} | Gender: {{ file.gender }} | ⚖️ Weight: {{ file.weight }} kg | 📏 Height: {{ file.height }} cm | 📟 Device Type: {{ file.device_type }} | 📍 Attachment Site: {{ file.attachment_site }}
+        </p>
+        <form method="get" action="{% url 'file_detail' file.id %}" style="margin: 20px 0;">
+          <label for="max_points" style="font-weight: bold;">Points to display (A high number may slow down the page):</label>
+          <input type="number" name="max_points" id="max_points" min="100" max="100000" step="100"
+                value="{{ request.GET.max_points|default:500 }}" style="margin-left: 10px; padding: 4px 8px;">
+          <button type="submit" style="padding: 4px 10px; margin-left: 10px;">Update</button>
+        </form>
+    </div>
+
+    <label for="metricSelect" style="font-weight: bold; display: block; margin-bottom: 8px;">
+      Select Metric for Y-Axis:
+    </label>
+    <select id="metricSelect" style="width: 300px; padding: 6px 10px; font-size: 16px; margin-bottom: 20px;">
+      {% for metric_name in available_metrics %}
+        <option value="{{ metric_name }}">{{ metric_name }}</option>
+      {% endfor %}
+    </select>
+
+    <canvas id="metricChart" width="400" height="200"></canvas>
+
+    {% if debug %}
+    <script>
+      console.log("DEBUG - downsampled data:", {{ downsampled_metrics_json|safe }});
+    </script>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.0/dist/chartjs-adapter-luxon.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    Chart.register(window['chartjs-plugin-annotation']);
+
+    const rawMetrics = {{ downsampled_metrics_json|safe }};
+    const availableMetrics = {{ available_metrics_json|safe }};
+    const activityBlocks = {{ activity_blocks_json|default:"[]"|safe }};
+
+    if (!rawMetrics || !rawMetrics.length || !availableMetrics || !availableMetrics.length) {
+      alert("No metrics available to display the graph.");
+      return;
+    }
+
+    function transformData(metricName) {
+      return {
+        labels: rawMetrics.map(m => m.timestamp),
+        datasets: [{
+          label: metricName,
+          data: rawMetrics.map(m => m[metricName]),
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          fill: true,
+          tension: 0.1
+        }]
+      };
+    }
+
+    function generateActivityAnnotations(blocks) {
+      const defaultColors = {
+        'Walking': 'rgba(54, 162, 235, 0.3)',
+        'Running': 'rgba(255, 99, 132, 0.3)',
+        'Sitting': 'rgba(255, 206, 86, 0.2)',
+        'default': 'rgba(75, 192, 192, 0.15)'
+      };
+
+      let annotations = {};
+
+      blocks.forEach((block, idx) => {
+        const color = defaultColors[block.activity] || defaultColors['default'];
+
+        annotations[`activity${idx}`] = {
+          type: 'box',
+          xMin: block.start,
+          xMax: block.end,
+          yScaleID: 'y',
+          backgroundColor: color,
+          borderWidth: 0,
+          enter({ chart }) {
+            chart.canvas.style.cursor = 'pointer';
+          },
+          leave({ chart }) {
+            chart.canvas.style.cursor = 'default';
+          },
+          label: {
+            display: false
+          },
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: () => `Activity: ${block.activity}`
+            }
+          }
+        };
+      });
+
+      return annotations;
+    }
+
+    const ctx = document.getElementById('metricChart');
+    if (!ctx) {
+      console.error("Canvas element not found");
+      return;
+    }
+
+    const chart = new Chart(ctx.getContext('2d'), {
+      type: 'line',
+      data: transformData(availableMetrics[0]),
+      options: {
+        responsive: true,
+        interaction: {
+          mode: 'nearest',
+          intersect: false
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: function (context) {
+                const index = context.dataIndex;
+                const metric = context.dataset.label;
+                const value = context.formattedValue;
+                const activity = rawMetrics[index]?.activity || "Sin actividad";
+                return `${metric}: ${value} (Actividad: ${activity})`;
+              }
+            }
+          },
+          annotation: {
+            annotations: generateActivityAnnotations(activityBlocks)
+          }
+        },
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              tooltipFormat: 'yyyy-MM-dd HH:mm',
+              displayFormats: {
+                hour: 'HH:mm',
+                day: 'MMM d'
+              }
+            },
+            title: {
+              display: true,
+              text: 'Time'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: availableMetrics[0]
+            }
+          }
+        }
+      }
+    });
+
+    document.getElementById('metricSelect').addEventListener('change', function () {
+      const selected = this.value;
+      chart.data = transformData(selected);
+      chart.options.scales.y.title.text = selected;
+      chart.update();
+    });
+  });
+</script>
+{% endblock %}

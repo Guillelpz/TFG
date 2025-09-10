@@ -1,0 +1,25 @@
+{% extends "master.html" %}
+{% load static %}
+{% block title %}
+<title>Generate Graph</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+{% block background %}
+        <style>
+            body {
+                background-color: white;
+                background-image: none; /* Delete background image */
+            }
+        </style>
+    {% endblock %}
+    {% block content %}  
+    <body>
+        <h1>Graph</h1>
+
+        {{ plot_div|safe }}
+
+        <br><br>
+        <a href="{% url 'uploadData' %}">Upload New File</a>
+    </body>
+    </html>
+{% endblock %}

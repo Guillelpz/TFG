@@ -1,0 +1,13 @@
+<!-- success.html -->
+<h1>¡Etiquetado exitoso!</h1>
+
+{% if activity and labeled_count %}
+    <p>Se ha etiquetado la actividad <strong>{{ activity }}</strong>.</p>
+    <p>Número de filas afectadas: <strong>{{ labeled_count }}</strong>.</p>
+{% else %}
+    <p>El archivo ha sido etiquetado correctamente.</p>
+{% endif %}
+
+{% if output_path %}
+    <p>Ruta del archivo de salida: <code>{{ output_path }}</code></p>
+{% endif %}

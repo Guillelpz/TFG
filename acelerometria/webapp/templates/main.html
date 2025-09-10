@@ -1,0 +1,41 @@
+{% extends "master.html" %}
+{% load static %}
+{% block title %}
+<title>main iMUDS</title>
+{%endblock%}
+
+{% block content %}
+<main class="main">
+  <h1>The Accelerometer Physical Activity Open Repository</h1>
+  <section>
+    {% if user.is_staff %}
+            <article class="sectionsPreview">
+                <div class="sectionItem">
+                    <a href="/exploreData">
+                        <img src="./static/CutPointsLogo.png" alt="Section 1">
+                    </a>
+                    <br>
+                    <a class = "sectionName" href="/exploreData">Data Visualizer</a>
+                </div>
+                <div class="sectionItem">
+                    <a href="/uploadFile">
+                        <img src="./static/logo.png" alt="Section 1">
+                    </a>
+                    <br>
+                    <a class = "sectionName" href="/uploadFile">Data Labeler</a>
+                </div>
+            </article>
+    {% else %}
+    <article class="sectionsPreview">
+        <div class="sectionItem">    
+            <a href="/exploreData">
+                <img src="./static/CutPointsLogo.png" alt="Section 1">
+            </a>
+            <br>
+            <a class = "sectionName" href="/exploreData">Data Visualizer</a>
+        </div>
+    </article>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

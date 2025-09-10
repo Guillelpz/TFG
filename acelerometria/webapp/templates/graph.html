@@ -1,0 +1,251 @@
+{% extends "master.html" %}
+{% load static %}
+
+{% block head %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <link rel="stylesheet" href="{% static 'myglobal.css' %}">
+{% endblock %}
+
+{% block title %}
+  <title>Explore Data</title>
+{% endblock %}
+
+{% block content %}
+<div class="label-page-container">
+
+  <div class="button-container" style="margin-bottom: 20px;">
+    <a href="/" class="home-button" id="home-button">Volver a la página principal</a>
+  </div>
+
+  <div class="plot-container">
+    <div id="plotly-graph"></div>
+  </div>
+
+  <form method="get" action="{% url 'process_file' file_id %}">
+    <label for="metric">Select a metric:</label>
+    <select name="metric" id="metric" onchange="this.form.submit()">
+      {% for metric in metrics %}
+        <option value="{{ metric }}" {% if metric == selected_metric %}selected{% endif %}>{{ metric }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <div class="main-container" style="margin-top: 30px;">
+    <form id="label-form" method="POST" action="{% url 'label_data' file_id %}">
+      {% csrf_token %}
+      <h5>Label selected interval</h5>
+
+      <input type="hidden" name="start_time" id="start_time">
+      <input type="hidden" name="end_time" id="end_time">
+
+      <p>
+        <strong>Start:</strong> <span id="start_display">---</span><br>
+        <strong>End:</strong> <span id="end_display">---</span>
+      </p>
+
+      <label for="activity">Select activity:</label>
+      <select name="activity" id="activity" required style="width: 100%;">
+        <option value="">-- Choose activity --</option>
+        {% include "activity_options.html" %}
+      </select>
+
+      <button type="submit" style="margin-top: 10px;">Save label</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script>
+let selectedStart = null;
+let selectedEnd = null;
+let plotDiv = null;
+
+let originalHomeText = "Volver a la página principal";
+
+function getRandomColor() {
+  const colors = [
+    'rgba(135, 206, 250, 0.3)', 'rgba(144, 238, 144, 0.3)', 'rgba(255, 99, 132, 0.3)',
+    'rgba(255, 206, 86, 0.3)', 'rgba(160, 160, 255, 0.3)', 'rgba(255, 140, 0, 0.3)', 'rgba(255, 165, 0, 0.3)'
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  plotDiv = document.getElementById("plotly-graph");
+  const homeButton = document.getElementById("home-button");
+  // Inicializar Select2
+  const activitySelect = $("#activity");
+  if (activitySelect.length) {
+    activitySelect.select2({
+      placeholder: "Search or select an activity",
+      allowClear: true
+    });
+  }
+
+  // Cargar gráfico
+  fetch("{% url 'get_graph_data' file_id %}?metric={{ selected_metric }}")
+    .then(res => res.json())
+    .then(data => {
+      if (!data.x || !data.y) throw new Error("Invalid data");
+      Plotly.newPlot(plotDiv, [{
+        x: data.x,
+        y: data.y,
+        mode: 'lines',
+        name: '{{ selected_metric }}',
+        line: { color: 'rgb(31, 119, 180)' }
+      }], {
+        margin: { t: 30 },
+        dragmode: 'select',
+        shapes: [],
+        annotations: [],
+        selectdirection: 'h'
+      });
+      setupGraphInteraction();
+    })
+    .catch(err => {
+      console.error("Error loading graph:", err);
+      plotDiv.innerHTML = "<p>Error loading graph data.</p>";
+    });
+
+  function setupGraphInteraction() {
+    plotDiv.on('plotly_selected', function (eventData) {
+      if (!eventData || !eventData.range || !eventData.range.x || eventData.range.x.length !== 2) {
+        alert("No valid range selected.");
+        return;
+      }
+
+      selectedStart = eventData.range.x[0];
+      selectedEnd = eventData.range.x[1];
+
+      document.getElementById("start_time").value = selectedStart;
+      document.getElementById("end_time").value = selectedEnd;
+
+      document.getElementById("start_display").textContent = new Date(selectedStart).toLocaleString();
+      document.getElementById("end_display").textContent = new Date(selectedEnd).toLocaleString();
+    });
+  }
+
+  // Etiquetar intervalo seleccionado
+  const labelForm = document.getElementById("label-form");
+  labelForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const formData = new FormData(labelForm);
+    const label = formData.get("activity");
+
+    homeButton.textContent = "Processing...";
+    homeButton.style.pointerEvents = "none";
+    homeButton.style.opacity = "0.5";
+    homeButton.style.cursor = "not-allowed";
+
+    addLabeledRegion(label, selectedStart, selectedEnd);
+
+    if (!selectedStart || !selectedEnd) {
+      alert("No se ha seleccionado un intervalo válido.");
+      restoreHomeButton();
+      return;
+    }
+
+    fetch(labelForm.action, {
+      method: "POST",
+      body: formData,
+      headers: {
+        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+      }
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Network response not OK");
+      return response.json();
+    })
+    .then(data => {
+      restoreHomeButton();
+      if (data.status === "success") {
+        showSuccessPopup();
+        labelForm.reset();
+        document.getElementById("start_display").textContent = "---";
+        document.getElementById("end_display").textContent = "---";
+        $('#activity').val(null).trigger('change');
+      } else {
+        alert("Failed to save label: " + data.message);
+      }
+    })
+    .catch(error => {
+      restoreHomeButton();
+      console.error("Error in fetch:", error);
+      alert("Error saving the label.");
+    });
+
+    function restoreHomeButton() {
+      homeButton.textContent = originalHomeText;
+      homeButton.style.pointerEvents = "auto";
+      homeButton.style.opacity = "1";
+      homeButton.style.cursor = "pointer";
+    }
+  });
+
+  function showSuccessPopup() {
+    const popup = document.getElementById("success-popup");
+    popup.style.display = "block";
+    setTimeout(() => popup.style.display = "none", 2000);
+  }
+
+  function addLabeledRegion(label, start, end) {
+    if (!start || !end) return;
+    const fillColor = getRandomColor();
+    const activityCodeMatch = (label || "").trim().match(/^\d{5}/);
+    const activityCode = activityCodeMatch ? activityCodeMatch[0] : "N/A";
+
+    const newShape = {
+      type: 'rect',
+      xref: 'x',
+      yref: 'paper',
+      x0: start,
+      x1: end,
+      y0: 0,
+      y1: 1,
+      fillcolor: fillColor,
+      line: { width: 0 },
+      opacity: 0.5
+    };
+
+    const newAnnotation = {
+      x: new Date(start).toISOString(),
+      y: 1.03,
+      xref: 'x',
+      yref: 'paper',
+      text: String(activityCode),
+      showarrow: false,
+      font: { size: 10, color: '#000' },
+      bgcolor: '#ffffffcc',
+      bordercolor: '#ccc',
+      borderpad: 2,
+      opacity: 0.9
+    };
+
+    requestAnimationFrame(() => {
+      Plotly.relayout(plotDiv, {
+        shapes: (plotDiv.layout.shapes || []).concat([newShape]),
+        annotations: (plotDiv.layout.annotations || []).concat([newAnnotation])
+      });
+    });
+  }
+});
+</script>
+
+<!-- Popup -->
+<div id="success-popup" style="
+  display: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  z-index: 9999;
+">
+  Label saved successfully ✅
+</div>
+{% endblock %}

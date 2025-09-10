@@ -1,0 +1,43 @@
+{% extends "master.html" %}
+{% load static %}
+{% block title %}
+<title>Generate Graph</title>
+{% endblock %}
+{% block background %}
+    <style>
+        body {
+            background-color: #f4f4f4;
+            background-image: none; /*Delete background image*/
+        }
+    </style>
+{% endblock %}
+{% block content %}  
+    <div class ='selectColumns'>
+        <h1>Select columns for the graph</h1>
+
+        <form method="post" action="{% url 'generatePlot' %}">
+            {% csrf_token %}
+            <input type="hidden" name="file_id" value="{{ file_id }}">
+
+            <label for="x_column">X axis:</label>
+            <select name="x_column" required>
+                {% for col in columns %}
+                    <option value="{{ col }}">{{ col }}</option>
+                {% endfor %}
+            </select>
+
+            <br><br>
+
+            <label for="y_column">Y axis:</label>
+            <select name="y_column" required>
+                {% for col in columns %}
+                    <option value="{{ col }}">{{ col }}</option>
+                {% endfor %}
+            </select>
+
+            <br><br>
+
+            <button type="submit">Generate Graph</button>
+        </form>
+    </div>
+{% endblock %}

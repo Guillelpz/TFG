@@ -1,0 +1,176 @@
+{% extends "master.html" %}
+{% load static %}
+{% block title %}
+<title>Explore Data</title>
+{% endblock %}
+
+{% block content %}
+
+<div class="main-container">
+    
+  <aside class="sidebar hidden" id="sidebar">
+    <h1>Filters</h1>
+    <form method="get">
+      <label>Sex:</label>
+      <label><input type="checkbox" name="Male" value="Male"> Male</label>
+      <label><input type="checkbox" name="Female" value="Female"> Female</label>
+      
+      <label for="min_weight">Weight (kg):</label>
+      <div style="display: inline-flex; gap: 4px; margin-bottom: 8px;">
+        <input type="number" name="min_weight" id="min_weight" step="0.1" placeholder="min" style="width: 70px;">
+        <input type="number" name="max_weight" id="max_weight" step="0.1" placeholder="max" style="width: 70px;">
+      </div>
+    
+      <label for="min_age">Age:</label>
+      <div style="display: inline-flex; gap: 4px; margin-bottom: 8px;">
+        <input type="number" name="min_age" id="min_age" placeholder="min" style="width: 70px;">
+        <input type="number" name="max_age" id="max_age" placeholder="max" style="width: 70px;">
+      </div>
+    
+      <label for="min_height">Height (cm):</label>
+      <div style="display: inline-flex; gap: 4px; margin-bottom: 8px;">
+        <input type="number" name="min_height" id="min_height" step="0.1" placeholder="min" style="width: 70px;">
+        <input type="number" name="max_height" id="max_height" step="0.1" placeholder="max" style="width: 70px;">
+      </div>
+
+      <br>
+      <label>Upload Date:</label>
+      <label>From</label>
+      <input type="date" name="uploadDateFrom" id="uploadDateFrom">
+      <label>To</label>
+      <input type="date" name="uploadDateTo" id="uploadDateTo">
+
+      <button class="applyBtn" type="submit">Apply filters</button>
+    </form>
+    
+  </aside>
+
+  <section class="main-content">
+    <button class="showFiltersBtn right-align" id="showFiltersBtn" onclick="toggleSidebar()">☰ Show filters</button>
+    <h1>Main Content</h1>
+    <h2>Filtered Results</h2>
+    <table class="file-table">
+    <thead>
+      <tr>
+        <th>
+          <a href="?{% if request.GET.order_by == 'upload' %}order_by=-upload{% else %}order_by=upload{% endif %}" class="sortable-link">
+            Filename
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'upload' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-upload' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+       <th>
+          <a href="?order_by={% if request.GET.order_by == 'age' %}-age{% else %}age{% endif %}" class="sortable-link">
+            Age
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'age' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-age' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+        <th>
+          <a href="?order_by={% if request.GET.order_by == 'gender' %}-gender{% else %}gender{% endif %}" class="sortable-link">
+            Gender
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'gender' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-gender' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+        <th>
+          <a href="?order_by={% if request.GET.order_by == 'weight' %}-weight{% else %}weight{% endif %}" class="sortable-link">
+            Weight
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'weight' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-weight' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+        <th>
+          <a href="?order_by={% if request.GET.order_by == 'height' %}-height{% else %}height{% endif %}" class="sortable-link">
+            Height
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'height' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-height' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+        <th>
+          <a href="?order_by={% if request.GET.order_by == 'sampling_frequency' %}-sampling_frequency{% else %}sampling_frequency{% endif %}" class="sortable-link">
+            Sampling Freq
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'sampling_frequency' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-sampling_frequency' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+        <th>
+          <a href="?order_by={% if request.GET.order_by == 'created_at' %}-created_at{% else %}created_at{% endif %}" class="sortable-link">
+            Upload Date
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'created_at' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-created_at' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+        <th>
+          <a href="?order_by={% if request.GET.order_by == 'device_type' %}-device_type{% else %}device_type{% endif %}" class="sortable-link">
+            Device Type
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'device_type' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-device_type' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+        <th>
+          <a href="?order_by={% if request.GET.order_by == 'attachment_site' %}-attachment_site{% else %}attachment_site{% endif %}" class="sortable-link">
+            Attachment Site
+            <span class="sort-icons">
+              <span class="sort-up {% if request.GET.order_by == 'attachment_site' %}active{% endif %}">▲</span>
+              <span class="sort-down {% if request.GET.order_by == '-attachment_site' %}active{% endif %}">▼</span>
+            </span>
+          </a>
+        </th>
+      </tr>
+
+    </thead>
+      <tbody>
+        {% for file in files %}
+          <tr>
+            <td><a href="{% url 'file_detail' file.id %}" class="link-no-style">{{ file.upload.name }}</a></td>
+            <td>{{ file.age }}</td>
+            <td>{{ file.gender }}</td>
+            <td>{{ file.weight }}</td>
+            <td>{{ file.height }}</td>
+            <td>{{ file.sampling_frequency }}</td>
+            <td>{{ file.created_at|date:"Y-m-d" }}</td>
+            <td>{{ file.device_type }}</td>
+            <td>{{ file.attachment_site }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="9">No matching files found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </section>
+</div>
+
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const button = document.getElementById("showFiltersBtn");
+
+    sidebar.classList.toggle("hidden");
+
+    if (sidebar.classList.contains("hidden")) {
+      button.textContent = "☰ Show filters";
+    } else {
+      button.textContent = "☰ Hide";
+    }
+  }
+</script>
+
+{% endblock %}

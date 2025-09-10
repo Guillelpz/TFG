@@ -1,0 +1,51 @@
+{% extends "master.html" %}
+{% load static %}
+{% block title%}
+<head><title>Registration</title></head>
+{% endblock %}
+
+{% block content%}
+<main>
+    <h2>Bienvenido, ¡aquí podrás crear tu nueva cuenta!</h2>
+    <form class="registrationForm" method="post" action="">
+      {% csrf_token %}
+      
+      <div class="formGroup">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="formError">{{ form.username.errors }}</div>
+        {% endif %}
+      </div>
+  
+      <div class="formGroup">
+        {{ form.email.label_tag }}
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class="formError">{{ form.email.errors }}</div>
+        {% endif %}
+      </div>
+  
+      <div class="formGroup">
+        {{ form.password1.label_tag }}
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+          <div class="formError">{{ form.password1.errors }}</div>
+        {% endif %}
+      </div>
+  
+      <div class="formGroup">
+        {{ form.password2.label_tag }}
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+          <div class="formError">{{ form.password2.errors }}</div>
+        {% endif %}
+      </div>
+  
+      <button type="submit" class="submitBtn">Registrarse</button>
+    </form>
+  </main>
+  
+{% endblock %}
+    </body>
+</html>

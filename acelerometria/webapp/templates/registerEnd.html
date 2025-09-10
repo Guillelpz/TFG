@@ -1,0 +1,32 @@
+{% extends "master.html" %}
+{% load static %}
+{% block title %}
+<title>main iMUDS</title>
+{% endblock %}
+
+{% block content %}
+<main class="mainRegister">
+    <div class="container">
+        <div class="form-box">
+            <h2>Enter your data</h2>
+<!-- Display any messages (e.g. success, error)
+            {# Inline error message (e.g. passwords do not match) #}
+            {% if messages %}
+                {% for msg in messages %}
+                    {% if 'inline' in msg.tags %}
+                        <p style="color: red;">{{ msg }}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+ -->
+            <form method="post">
+                {% csrf_token %}
+                <input type="text" name="username" required placeholder="Username" value="{{ request.POST.username }}">
+                <input type="password" name="password" required placeholder="Enter Password">
+                <input type="password" name="confirm_password" required placeholder="Repeat Password">
+                <button type="submit">Register</button>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock %}

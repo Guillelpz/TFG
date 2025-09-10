@@ -1,0 +1,64 @@
+{% extends 'master.html' %}
+
+{% block title %}
+  <title>Upload File - iMUDS</title>
+{% endblock %}
+
+{% block content %}
+  <div class="upload-form-box">
+    <h2>Upload the File</h2>
+    <form id="upload-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="upload-button">Upload File</button>
+    </form>
+  </div>
+
+  <!-- Spinner oculto -->
+  <div id="spinner-overlay" style="display: none;">
+    <div class="spinner"></div>
+    <p style="text-align:center;">Processing file... This can take several minutes</p>
+  </div>
+
+  <!-- Estilos para el overlay del spinner -->
+  <style>
+    #spinner-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 6px solid #ccc;
+      border-top-color: #333;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Script para mostrar el spinner al enviar -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('upload-form');
+      const spinner = document.getElementById('spinner-overlay');
+
+      if (form && spinner) {
+        form.addEventListener('submit', function () {
+          spinner.style.display = 'flex';
+        });
+      }
+    });
+  </script>
+{% endblock %}

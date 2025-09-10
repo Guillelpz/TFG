@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  {% block head %}
+    <head>
+      <link rel="stylesheet" href="{% static 'myglobal.css' %}">
+      <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+      {% block title %}
+        <title>iMUDS</title>
+        <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+      {% endblock %}
+    </head>
+  {% endblock %}
+  <body>
+    {% block background %}
+      <style>
+        body {
+          background-image: url("{% static 'fondoEdited.jpg' %}");
+          background-size: cover;
+        }
+      </style>
+    {% endblock %}
+
+    <div class="page-container">
+      <header>
+  <div class="header-container">
+    <div class="header-left">
+      <a class="headerLink" href="/">
+        <img src="{% static 'logo.png' %}" alt="Logo" class="logo">
+        <h1 class="headerTitle">iMUDS</h1>
+      </a>
+    </div>
+
+    <div class="header-right">
+      {% if user.is_staff %}
+        <div class="user-section">
+          <span class="user-text">Hello admin, {{ user.username }}</span>
+          <a href="{% url 'password_change' %}" class="change-password-link">Change your password</a>
+          <form method="post" action="{% url 'logOut' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <button id="logoutButton" type="submit">Logout</button>
+          </form>
+        </div>
+      {% elif user.is_authenticated %}
+        <div class="user-section">
+          <span class="user-text">Hello, {{ user.username }}</span>
+          <a href="{% url 'password_change' %}" class="change-password-link">Change your password</a>
+          <form method="post" action="{% url 'logOut' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <button id="logoutButton" type="submit">Logout</button>
+          </form>
+        </div>
+      {% else %}
+        <form class="login-form" action="" method="post">
+          {% csrf_token %}
+          <input type="text" name="username" placeholder="Username" required>
+          <input type="password" name="password" placeholder="Password" required>
+          <button type="submit">Log In</button>
+          <a href="/register" class="register-button">Register</a>
+          <div>
+            <a href="{% url 'password_reset' %}" class="change-password-link">Forgot password?</a>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</header>
+      <main class="wrapperMaster">
+        {% if messages %}
+          <div class="message-container">
+            {% for message in messages %}
+              <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+          <script>
+            setTimeout(function() {
+              const messageBox = document.querySelector('.message-container');
+              if (messageBox) {
+                messageBox.classList.add('hidden');
+              }
+            }, 3000);
+          </script>
+        {% endif %}
+        {% block content %}
+        {% endblock %}
+      </main>
+
+      <footer>
+        <a class="footerLinks" href="https://etsiit.ugr.es/"> <h3>ETSIIT UGR</h3></a>
+        <h3 id="footerTitle">  </h3>
+        <a class="footerLinks" href="https://imuds.ugr.es/"> <h3>IMUDS UGR</h3></a>
+      </footer>
+    </div>
+  </body>
+</html>
