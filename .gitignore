@@ -1,0 +1,12 @@
+*.gt3x
+*.sqlite
+*.sqlite3
+/Archivos Memoria/
+Archivos Memoria/
+*.gt3x
+*.sqlite
+*.sqlite3
+*.zip
+*.pdf
+__pycache__/
+*.pyc
