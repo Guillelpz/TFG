@@ -1,1 +1,16 @@
+# Archivos de base de datos
+acelerometria/db/db.sqlite3
+*.sqlite3
+*.sqlite3-journal
 
+# Archivos de Python
+*.pyc
+__pycache__/
+
+# Entornos y logs
+.env
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
